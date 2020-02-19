@@ -1,0 +1,266 @@
+---
+title: "Reproducible Research Project 2-Wk4"
+author: '"Dr-A-Soni'
+date: "19/02/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## **Synopsis**
+The assignment is based on the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database and it covers the Storms and other severe weather events spanning from 1950 to November 2011 that causes both public health and economic problems for communities and municipalities.
+This database tracks the characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates the fatalities, injuries, and Economic damage.
+
+Storm Data:
+https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2
+
+Additional Information include: 
+
+a) National Weather Service Storm Data Documentation- https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf
+
+b) National Climatic Data Center Storm Events FAQ - https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf
+
+
+This project addresses the following questions with relevant answer and supoorted evidence in terms of plots:
+1)Across the United States, which types of events (as indicated in the EVTYPE\color{red}{\verb|EVTYPE|}
+EVTYPE variable) are most harmful with respect to population health?
+2) Across the United States, which types of events have the greatest economic consequences?
+
+### **Goal:**
+
+#### The Goal of this addignment is to :
+1) to learn to generate RMarkdown document
+2) to know the importance of reproducibility
+3) to analyse the data and produce answers for the given questions.
+
+## **1)Across the United States, which types of events (as indicated in the EVTYPE\color{red}{\verb|EVTYPE|EVTYPE variable) are most harmful with respect to population health?**
+
+## **Data Processing**
+```{r}
+## Firstly set Working directory to the designated folder.
+getwd()
+setwd("c://Users/chinks/Downloads/coursera/wk4/")
+getwd()
+
+## Loading and processing the data from the raw file :
+
+Storm <- read.csv("C://Users/chinks/Downloads/coursera/wk4/repdata_data_StormData(1).csv")
+head(Storm)
+colnames(Storm)
+summary(Storm)
+```
+
+## Loading relevant packages
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+## **To answer the question not all the data is relevant, hence narrowing down the data with the informaiton improtant to answer to question.**
+
+```{r}
+Storm_Health <- Storm[ , c(8,23:24)]
+##Our new data set includes:
+## i)Event Types (EVTYPE)
+## ii)Fatalities
+### iii)Injuries
+
+head(Storm_Health)
+dim(Storm_Health)
+summary(Storm_Health)
+```
+### Part 1 : Addressing Individually the Fatalities and Injuries resulting from the Storm Events:
+```{r}
+## Aggregating the data of Fatalities into a new vector
+Fatal <- aggregate(FATALITIES ~ EVTYPE, data = Storm_Health, sum)
+head(Fatal)
+## arranging the data with highest fatalities, 
+Fatal <- Fatal[order(Fatal$FATALITIES, decreasing = TRUE), ]
+head(Fatal, 10)
+Storm_Fatal <- Fatal[1:10, ]
+Storm_Fatal
+
+## Aggregating the data of Injuries into a new vector:
+Injuries <- aggregate(INJURIES ~ EVTYPE, data = Storm_Health, sum)
+head(Injuries)
+## sorting the data with the highest injuries.
+Injuries <- Injuries[order(-Injuries$INJURIES), ]
+## Using the Top 10 results
+Storm_Injury <- Injuries[1:10, ]
+Storm_Injury
+```
+
+### Part 2: Using Combined numbers: Answering the question by combining the effects of the events:
+
+```{r}
+HEalth_Outcome <- aggregate(cbind(FATALITIES, INJURIES) ~ EVTYPE, data = Storm_Health, FUN = sum)
+HEalth_Outcome$People_Loss <- HEalth_Outcome$FATALITIES + HEalth_Outcome$INJURIES
+head(HEalth_Outcome)
+### re-arranging the data 
+HEalth_Outcome <- HEalth_Outcome[order(HEalth_Outcome$People_Loss, decreasing = TRUE), ]
+head(HEalth_Outcome)
+Casualty <- HEalth_Outcome[1:10, ]
+colnames(Casualty)
+## removing first column
+Casualty[,-1]
+x <- Casualty$EVTYPE
+## rearrangingt he data 
+health <- as.matrix(t(Casualty[,-1]))
+colnames(health) <- x
+health
+```
+
+## **Result**
+
+### The first analysis is to analyze the impacts of severe weather events on the population health. We will summarize the total number of fatalities and injuries by event type. A bar graph is presented for visualtion purposes.
+
+## The two Plot describes the advesrse effects of Storm on Human Health
+
+```{r}
+par(mfrow = c(1, 2), mar = c(12, 4, 3, 2), mgp = c(3, 1, 0), cex = 0.8)
+barplot(Storm_Fatal$FATALITIES, las = 3, names.arg = Storm_Fatal$EVTYPE, main = "FATALITIES VS Top 10 Storm Events", 
+        ylab = "Number of fatalities", col = "Pink", ylim = c(0,6000))
+barplot(Storm_Injury$INJURIES, las = 3, names.arg = Storm_Injury$EVTYPE, main = "Injuries VS Top 10 Storm Events", 
+        ylab = "Number of injuries", col = "light blue", ylim = c(0,100000))
+
+```
+
+### This plot describe the Top 10 Storm Event with Hightest fatalities and injuries:
+
+```{r}
+barplot(health, col = c("green","blue"), main = "aftereffects of the event on people", cex.axis = 0.6)
+legend("topright", c("FATALITIES","INJURIES"), fill = c("green","blue"))
+
+```
+
+### **Conclusion**
+
+Looking from both aspects in Barplots it can be concluded that TORNADO has the hightest level of both Injuries and Fatalities, that causes most population health harms
+
+
+## **2) Across the United States, which types of events have the greatest economic consequences?**
+
+## **Data Processing**
+From the entire data only selecting the relevant data need to answer this question. 
+
+```{r}
+Storm_Property <- Storm[ , c(8,25:28)]
+head(Storm_Property)
+```
+
+###  Our new data set includes:
+ 1) Event Types (EVTYPE), 
+ 2) Property Damage (PROPDMG), 
+ 3) Property Damage Expense by symbol (PROPDAMAGE)
+ 4) Crop Damage (CROPDMG)
+ 5) Crop Damage Expense by symbol (CROPDAMAGE)
+ 
+```{r}
+head(Storm_Property)
+
+colnames(Storm_Property)
+```
+
+### **Data looks a lot better now! We will now convert the PROPDMGEXP & CROPDMGEXP fields to tangible numbers where H (hundreds = 10^2), K (thousands = 10^3),M (millions = 10^6), and B (billions = 10^9) based on Wikipedia power of 10 table.**
+
+```{r}
+Storm_Property$PROPDMGEXP <- gsub("[Hh]", "2", Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- gsub("[Kk]", "3", Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- gsub("[Mm]", "6", Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- gsub("[Bb]", "9", Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- gsub("\\+", "1", Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- gsub("\\?|\\-|\\ ", "0",  Storm_Property$PROPDMGEXP)
+Storm_Property$PROPDMGEXP <- as.numeric(Storm_Property$PROPDMGEXP)
+
+tail(Storm_Property)
+Storm_Property$CROPDMGEXP <- gsub("[Hh]", "2", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- gsub("[Kk]", "3", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- gsub("[Mm]", "6", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- gsub("[Bb]", "9", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- gsub("\\+", "1", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- gsub("\\-|\\?|\\ ", "0", Storm_Property$CROPDMGEXP)
+Storm_Property$CROPDMGEXP <- as.numeric(Storm_Property$CROPDMGEXP)
+
+Storm_Property$PROPDMGEXP[is.na(Storm_Property$PROPDMGEXP)] <- 0
+Storm_Property$CROPDMGEXP[is.na(Storm_Property$CROPDMGEXP)] <- 0
+
+Storm_Property <- mutate(Storm_Property, 
+                    PROPDMGTOTAL = PROPDMG * (10 ^ PROPDMGEXP), 
+                    CROPDMGTOTAL = CROPDMG * (10 ^ CROPDMGEXP))
+head(Storm_Property)
+```
+
+### Part 1: Here the Property Damage and Crop Damage are considered Separately:
+
+### **Processing the data related to property damage occurred by Storm:**
+
+```{r}
+St_PROPDMG <- aggregate(PROPDMGTOTAL ~ EVTYPE, data = Storm_Property, FUN = sum)
+head(St_PROPDMG)
+St_PROPDMG <- St_PROPDMG[order(St_PROPDMG$PROPDMGTOTAL, decreasing = TRUE), ]
+head(St_PROPDMG)
+
+## aranging the data and taking top 10 enteries
+St_PROP <- St_PROPDMG[1:10, ]
+St_PROP
+```
+
+### **Processing the data  related to the Crop Damage occurred by Storm events**
+
+```{r}
+St_CROPDMG <- aggregate(CROPDMGTOTAL ~ EVTYPE, data = Storm_Property, FUN = sum)
+St_CROPDMG <- St_CROPDMG[order(St_CROPDMG$CROPDMGTOTAL, decreasing = TRUE), ]
+head(St_CROPDMG)
+St_CROP <- St_CROPDMG[1:10, ]
+```
+
+## Part 2: Senario where property and Crop damage considered together.
+
+```{r}
+St_Both <- aggregate(cbind(PROPDMGTOTAL, CROPDMGTOTAL) ~ EVTYPE, data = Storm_Property, FUN = sum)
+head(St_Both)
+St_Both$Economic <- St_Both$PROPDMGTOTAL + St_Both$CROPDMGTOTAL
+St_Both <- St_Both[order(St_Both$Economic, decreasing = TRUE), ]
+St_BOTH <- St_Both[1:10, ]
+St_BOTH
+```
+
+## **Result**
+
+The analysis covers the Economic damage done to property and Crops by the Storm. The  bargraph is presented for visualtion purposes which shows the adverse effects of Storm.
+
+Part 1: The Plot shows the Property Damage and Crop Damage Separately:
+
+```{r}
+par(mfrow = c(1, 2), mar = c(12, 4, 3, 2), mgp = c(3, 1, 0), cex = 0.8)
+barplot(St_PROP$PROPDMGTOTAL/10^9, names.arg = St_PROP$EVTYPE, col = "pink", las = 2, main = "Total Property Damage by Storm",
+        ylab = "Total Damage in USD(10^9)")
+barplot(St_CROP$CROPDMGTOTAL/10^9, names.arg = St_CROP$EVTYPE, col = "light green", las = 2, main = "Total CROP Damage by Storm",
+        ylab = "Total Damage in USD(10^9)")
+```
+
+Part:2 Here the Plot shows the combined result of the property and Crop damage by the Storm Events: 
+
+```{r} 
+par(mfrow= c(1,1), mar = c(12,8,4,0))
+barplot(St_BOTH$Economic/10^9, names.arg = St_BOTH$EVTYPE, col = "orange", 
+        las = 2, main = "Total Property and Crop Damage by Top 10 Storm Events",
+        ylim = c(0,170), ylab = "Total Damage in USD(10^9)")
+```
+
+
+## **Conclusion**
+
+The chart shows that Flood  and Drought have the hightest economic impact by Climatic Events.
+
+## **RESULTS**
+
+### Based on our Reproducible Research below - we have discovered the following:
+
+    1) Tornados are the most harmful severe weather events to population health with respect to highest number of fatalities and injuries
+    2) Floods and Draught are the most expensive severe weather events that have the greatest economic consequences.
+
+
